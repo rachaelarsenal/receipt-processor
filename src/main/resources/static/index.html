@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Receipt Processor</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				padding: 20px;
+			}
+
+			textarea {
+				width: 100%;
+				max-width: 800px;
+			}
+
+			#points {
+				font-size: 1.2rem;
+				font-weight: bold;
+				color: green;
+				margin-top: 20px;
+			}
+
+			#error {
+				color: red;
+			}
+		</style>
+	</head>
+
+	<body>
+		<h2>Submit Receipt JSON</h2>
+
+		<textarea id="jsonInput" rows="20" placeholder="Paste receipt JSON here"></textarea>
+
+		<br>
+		<br>
+
+		<button onclick="submitJson()">Submit</button>
+
+		<br>
+		<br>
+
+		<div id="response"></div>
+		<div id="points"></div>
+		<div id="error"></div>
+
+		<script>
+			async function submitJson() {
+				const input = document.getElementById('jsonInput').value;
+
+				document.getElementById('response').textContent = '';
+				document.getElementById('points').textContent = '';
+				document.getElementById('error').textContent = '';
+
+				try {
+					const response = await fetch('/receipts/process', {
+						method: 'POST',
+						headers: {'Content-Type': 'application/json'},
+						body: input
+					});
+
+					const result = await response.json();
+
+					if (!response.ok) {
+						throw new Error(result.error);
+					}
+
+					document.getElementById('response').textContent = `Receipt ID: ${result.id}`;
+
+					const pointsRes = await fetch(`/receipts/${result.id}/points`);
+					const pointsData = await pointsRes.json();
+
+					document.getElementById('points').textContent = `🎉 Points Awarded: ${pointsData.points}`;
+				}
+				catch (error) {
+					document.getElementById('error').textContent = '❌ ' + error.message;
+				}
+			}
+		</script>
+	</body>
+</html>
